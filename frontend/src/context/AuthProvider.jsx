@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState } from "react";
-import { auth } from "../services/firebase";
+import { auth } from "../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+// import api from '../services/api'; // Uncomment if you have an api instance
 
 export const AuthContext = createContext();
 
@@ -9,11 +10,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user && user.email.endsWith("@hamilton.edu")) {
         setUser(user);
+        // Optional: Sync with backend
+        // const token = await user.getIdToken();
+        // await api.post('/auth/sync-user', { idToken: token });
       } else {
-        if (user) signOut(auth); // Auto-logout if wrong domain
+        if (user) await signOut(auth); // Auto-logout if wrong domain
         setUser(null);
       }
       setLoading(false);
@@ -22,11 +26,10 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  const value = { user, loading };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading }}>
       {!loading && children}
     </AuthContext.Provider>
   );
 }
+

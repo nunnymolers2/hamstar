@@ -1,7 +1,9 @@
 import { signInWithPopup, signOut } from "firebase/auth";
-import { auth, googleProvider } from "../../services/firebase";
+import { api } from '../../services/api'; 
+import { auth, googleProvider } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import axios from "axios";
 
 async function deleteUser(user) {
   try {
@@ -14,6 +16,11 @@ async function deleteUser(user) {
   }
 }
 
+async function syncUser(user) {
+  const idToken = await user.getIdToken();
+  await axios.post("/api/auth/sync-user", { idToken });
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
@@ -23,25 +30,29 @@ export default function Login() {
     try {
       setLoading(true);
       setError(null);
-      
+
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
 
       // Strict domain check
       if (!user.email.endsWith("@hamilton.edu")) {
-        // Delete the user immediately instead of just signing out
         await deleteUser(user);
-        throw new Error("Unauthorized domain");
+        throw new Error("Only @hamilton.edu emails allowed");
       }
-      
 
+      // Sync with backend - updated endpoint
+      const token = await result.user.getIdToken();
+      await api.post('/auth/sync-user', { idToken: token });
+      
       // Successful login
       navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
-      setError(error.message.includes("popup") 
-        ? "Popup blocked or closed. Please try again."
-        : "Login failed. Please try again.");
+      setError(
+        error.message.includes("popup")
+          ? "Popup blocked or closed. Please try again."
+          : error.message || "Login failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -51,7 +62,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-80 text-center">
         <h1 className="text-2xl font-bold mb-4">Hamilton Login</h1>
-        
+
         {error && (
           <div className="mb-4 p-2 bg-red-100 text-red-700 rounded text-sm">
             {error}
@@ -65,13 +76,7 @@ export default function Login() {
             loading ? "opacity-70 cursor-not-allowed" : ""
           }`}
         >
-          {loading ? (
-            "Processing..."
-          ) : (
-            <>
-              Sign In with Google
-            </>
-          )}
+          {loading ? "Processing..." : <>Sign In with Google</>}
         </button>
 
         <p className="mt-4 text-sm text-gray-500">

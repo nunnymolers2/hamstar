@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthProvider";
 import { signOut } from "firebase/auth";
-import { auth } from "../services/firebase";
+import { auth } from "../firebase";
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {

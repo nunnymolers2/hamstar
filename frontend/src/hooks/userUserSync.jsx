@@ -1,6 +1,6 @@
 // frontend/src/hooks/useUserSync.js
 import { useEffect } from 'react';
-import { auth } from '../services/firebase';
+import { auth } from '../../firebase';
 import { api } from '../services/api';
 
 export function useUserSync() {
