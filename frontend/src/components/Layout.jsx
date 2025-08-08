@@ -5,7 +5,7 @@ export default function Layout() {
   return (
     <>
       <Navbar />
-      <main class='flex-1'>
+      <main className='flex-1'>
         <Outlet />  {/* This is where the child routes will be rendered */}
       </main>
     </>

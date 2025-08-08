@@ -55,7 +55,6 @@ const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
-      // Add more protected routes as needed
     ],
   },
 ]);
