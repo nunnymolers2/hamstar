@@ -1,20 +1,30 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Button from "../components/Button";
+import ListingCard from "../components/ListingCard";
 
+// Filter options for categories and conditions
 const TAGS = ["electronics", "furniture", "clothing", "books", "other"];
 const CONDITIONS = ["new", "used", "refurbished", "for parts"];
 
 export default function Home() {
+  // Sidebar and dropdown open states
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen1, setDropdownOpen1] = useState(false);
   const [dropdownOpen2, setDropdownOpen2] = useState(false);
+
+  // Selected filter values
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedConditions, setSelectedConditions] = useState([]);
+  
+  // Listings Data
   const [listings, setListings] = useState([]);
+
+  // Fetch Status
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Fetch listings from backend
   useEffect(() => {
     const fetchListings = async () => {
       try {
@@ -34,12 +44,14 @@ export default function Home() {
     fetchListings();
   }, []);
 
+  // Toggle category tag selection when checkbox is clicked
   const handleCheckbox = (tag) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
+  // Toggle condition selection when checkbox is clicked
   const handleConditionCheckbox = (condition) => {
     setSelectedConditions((prev) =>
       prev.includes(condition)
@@ -48,6 +60,7 @@ export default function Home() {
     );
   };
 
+  // Filter listings based on selected categories and conditions
   const filteredListings = listings.filter((listing) => {
     const matchesCategory =
       selectedTags.length === 0 || selectedTags.includes(listing.category);
@@ -59,6 +72,7 @@ export default function Home() {
     return matchesCategory && matchesCondition;
   });
 
+  // Show loading or error messages
   if (loading)
     return <div className="text-center py-8">Loading listings...</div>;
   if (error)
@@ -66,11 +80,13 @@ export default function Home() {
 
   return (
     <div className="flex">
+      {/* Sidebar with filters */}
       <aside
         className={`bg-gray-50 border-r border-gray-200 w-64 min-h-screen px-3 py-4 transition-all
            ${sidebarOpen ? "block" : "hidden"} sm:block`}
       >
         <ul className="space-y-2 font-medium">
+          {/* Categories filter dropdown */}
           <li>
             <button
               type="button"
@@ -102,6 +118,8 @@ export default function Home() {
               </ul>
             )}
           </li>
+
+          {/* Condition filter dropdown */}
           <li>
             <button
               type="button"
@@ -134,6 +152,8 @@ export default function Home() {
             )}
           </li>
         </ul>
+      
+      {/* Main content: filtered listings grid */}  
       </aside>
       <main className="flex-1 p-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
@@ -144,43 +164,9 @@ export default function Home() {
                 : "No listings match your filters"}
             </div>
           )}
+          {/* Render filtered listing cards */}
           {filteredListings.map((listing) => (
-            <div
-              key={listing._id}
-              className="bg-white border rounded-lg shadow p-4 flex flex-col justify-between items-center"
-            >
-              {listing.images?.length > 0 ? (
-                <img
-                  src={listing.images[0].url}
-                  alt={listing.title}
-                  className="w-full h-48 lg:size-1/2 object-cover mb-4 rounded"
-                />
-              ) : (
-                <div className="w-full h-48 bg-gray-200 mb-4 rounded flex items-center justify-center">
-                  <span className="text-gray-500">No image</span>
-                </div>
-              )}
-              <div className="flex-1 w-full">
-                <h3 className="font-bold text-lg mb-2">{listing.title}</h3>
-                <p className="text-blue-600 font-semibold mb-2">
-                  ${listing.price}
-                </p>
-                <p className="text-sm text-gray-600 mb-2 capitalize">
-                  Condition: {listing.condition.replace(/-/g, " ")}
-                </p>
-                <p className="text-sm text-gray-600 mb-2 capitalize">
-                  Category: {listing.category}
-                </p>
-                <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                  {listing.description}
-                </p>
-              </div>
-              <Link to={`/listings/${listing._id}`} className="mt-auto w-full">
-                <Button variant="default" className="w-full">
-                  View Details
-                </Button>
-              </Link>
-            </div>
+            <ListingCard key={listing._id} listing={listing} />
           ))}
         </div>
       </main>

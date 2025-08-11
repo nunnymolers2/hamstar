@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const ClaimSchema = new Schema({
@@ -23,4 +23,5 @@ const ClaimSchema = new Schema({
   }
 });
 
-module.exports = mongoose.model("Claim", ClaimSchema);
+const Claim = mongoose.model("Claim", ClaimSchema);
+export default Claim; // Changed from module.exports

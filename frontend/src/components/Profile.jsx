@@ -16,8 +16,12 @@ function Profile() {
       {/* User Info */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="text-xl font-semibold mb-2">User Info</h2>
-        <p className="text-gray-700"><span className="font-medium">Name:</span> John Doe</p>
-        <p className="text-gray-700"><span className="font-medium">Email:</span> jdoe@hamilton.edu</p>
+        <p className="text-gray-700">
+          <span className="font-medium">Name:</span> John Doe
+        </p>
+        <p className="text-gray-700">
+          <span className="font-medium">Email:</span> jdoe@hamilton.edu
+        </p>
       </div>
 
       {/* Change Password */}
@@ -51,7 +55,6 @@ function Profile() {
         />
         {/* Save Bio Button */}
         <Button variant="default">Save New Bio</Button>
-        
       </div>
     </div>
   );
