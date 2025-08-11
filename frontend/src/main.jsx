@@ -1,24 +1,22 @@
-import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { AuthProvider } from './context/AuthProvider';
-import RequireAuth from './context/RequireAuth';
-import AuthRedirect from './components/Auth/AuthRedirect';
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { AuthProvider } from "./context/AuthProvider";
+import RequireAuth from "./context/RequireAuth";
+import AuthRedirect from "./components/Auth/AuthRedirect";
 
-import './assets/styles/index.css';
-import Layout from './components/Layout';
-import Home from './pages/Home';
-import Signup from './pages/auth/Signup';
-import Login from './pages/auth/Login';
-import Dashboard from './pages/Dashboard';
-import CreateListing from './pages/auth/CreateListing';
-import Listing from './pages/Listing';
-
-
+import "./assets/styles/index.css";
+import Layout from "./components/Layout";
+import Home from "./pages/Home";
+import Signup from "./pages/auth/Signup";
+import Login from "./pages/auth/Login";
+import Dashboard from "./pages/Dashboard";
+import CreateListing from "./pages/auth/CreateListing";
+import Listing from "./pages/Listing";
 
 const router = createBrowserRouter([
   {
-    path: '/',
+    path: "/",
     element: <Layout />,
     children: [
       {
@@ -26,7 +24,7 @@ const router = createBrowserRouter([
         element: <Home />,
       },
       {
-        path: 'signup',
+        path: "signup",
         element: (
           <AuthRedirect>
             <Signup />
@@ -34,7 +32,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'login',
+        path: "login",
         element: (
           <AuthRedirect>
             <Login />
@@ -42,7 +40,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'dashboard',
+        path: "dashboard",
         element: (
           <RequireAuth>
             <Dashboard />
@@ -50,7 +48,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'create-listing',
+        path: "create-listing",
         element: (
           <RequireAuth>
             <CreateListing />
@@ -58,16 +56,14 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'listing',
-        element: (
-            <Listing/>
-        )
-      }
+        path: "listings/:id", // Changed from 'listing' to 'listings/:id'
+        element: <Listing />, // No auth requirement for viewing listings
+      },
     ],
   },
 ]);
 
-const root = createRoot(document.getElementById('root'));
+const root = createRoot(document.getElementById("root"));
 
 root.render(
   <StrictMode>

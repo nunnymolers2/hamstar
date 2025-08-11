@@ -36,60 +36,37 @@ const verifyTokenAndUser = async (req, res, next) => {
     res.status(401).json({ error: "Unauthorized" });
   }
 };
-// Modify your route to properly handle multipart form data
+
+// routes/listing.routes.js
 router.post(
   "/",
   verifyTokenAndUser,
   upload.array("images"),
   async (req, res) => {
-    console.log("Received files:", req.files);
     try {
-      // Access text fields from req.body (multer puts them there)
-      const {
-        title,
-        description,
-        price,
-        condition,
-        category,
-        negotiable,
-        trading,
-      } = req.body;
+      // Format images array properly
+      const images = req.files.map((file) => ({
+        url: file.path,
+        publicId: file.filename,
+      }));
 
-      // Validation
-      if (!title || !description || !price || !condition || !category) {
-        return res.status(400).json({ error: "Missing required fields" });
-      }
-
-      // Get image URLs from Cloudinary upload
-      const images =
-        req.files?.map((file) => ({
-          url: file.path,
-          publicId: file.filename,
-        })) || [];
-
-      // Create new listing
       const newListing = new Listing({
-        title,
-        description,
-        price: parseFloat(price),
+        ...req.body,
+        images, // Now properly formatted
         owner: req.user._id,
-        negotiable: negotiable === "true" || negotiable === true,
-        trading: trading === "true" || trading === true,
-        condition,
-        images,
-        category,
-        claims: [],
+        price: parseFloat(req.body.price),
+        negotiable: req.body.negotiable === "true",
+        trading: req.body.trading === "true",
       });
 
       const savedListing = await newListing.save();
-
-      res.status(201).json({
-        message: "Listing created successfully",
-        listing: savedListing,
-      });
+      res.status(201).json(savedListing);
     } catch (error) {
-      console.error("Error creating listing:", error);
-      res.status(500).json({ error: "Internal server error" });
+      console.error("Error:", error);
+      res.status(500).json({
+        error: "Server error",
+        details: error.message,
+      });
     }
   }
 );
@@ -99,7 +76,7 @@ router.get("/", async (req, res) => {
   try {
     const listings = await Listing.find()
       .populate("owner", "-password") // Exclude password if your User model has one
-      .populate("claims");
+      // .populate("claims");
 
     res.json(listings);
   } catch (error) {
@@ -113,7 +90,7 @@ router.get("/:id", async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id)
       .populate("owner", "-password")
-      .populate("claims");
+      // .populate("claims");
 
     if (!listing) {
       return res.status(404).json({ error: "Listing not found" });

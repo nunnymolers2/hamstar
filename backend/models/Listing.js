@@ -34,7 +34,14 @@ const ListingSchema = new Schema({
   },
   images: [
     {
-      type: String, // URL or path to the image
+      url: {
+        type: String,
+        required: true,
+      },
+      publicId: {
+        type: String,
+        required: true,
+      },
     },
   ],
   createdAt: {

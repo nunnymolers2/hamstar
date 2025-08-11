@@ -1,9 +1,16 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// Verify environment variables immediately
+console.log("Env Verification:", {
+  CLOUDINARY: !!process.env.CLOUDINARY_CLOUD_NAME,
+  MONGO: !!process.env.MONGODB_URI,
+});
+
 import express from "express";
 import cors from "cors";
 import connectDB from "./config/db.js";
+import { initCloudinary } from "./config/cloudinary.js"; // Import initialization function
 import authRoutes from "./routes/auth.routes.js";
 import listingRoutes from "./routes/listing.routes.js"; // New import
 import admin from "./config/firebase.js";
@@ -17,6 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Database connection
 connectDB();
+const cloudinary = initCloudinary(); // Explicit initialization
 
 app.use((req, res, next) => {
   console.log(`Incoming ${req.method} ${req.url}`);
