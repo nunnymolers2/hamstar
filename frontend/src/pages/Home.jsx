@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PRODUCTS } from "../data/products";
+import Button from "../components/Button";
 
 const TAGS = ["Clothes", "Kitchen Appliances", "Cutlery"];
 
@@ -75,9 +76,9 @@ export default function Home() {
               />
               <div className="font-bold text-lg mb-2">{product.name}</div>
               <div className="text-blue-600 font-semibold mb-2">${product.price}</div>
-              <button className="mt-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+              <Button variant="default" className="mt-auto">
                 Claim
-              </button>
+              </Button>
             </div>
           ))}
         </div>
