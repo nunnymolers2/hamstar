@@ -4,30 +4,70 @@ import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import { Link } from 'react-router-dom';
 
+import { useState } from "react";
+
+import Profile from "../components/Profile.jsx";
+import ClaimsBuying from "../components/ClaimsBuying.jsx";
+import ClaimsSelling from "../components/ClaimsSelling.jsx";
+
+
 export default function Dashboard() {
   const { user } = useContext(AuthContext);
 
   const handleLogout = async () => {
     await signOut(auth);
   };
+
+  const [activeTab, setActiveTab] = useState("profile");
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "profile":
+        return <Profile />;
+      case "buying":
+        return <ClaimsBuying />;
+      case "selling":
+        return <ClaimsSelling />;
+      default:
+        return <Profile />;
+    };
+  };
   
   return (
-    
-    <div className="h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-80 text-center">
-        <h1 className="text-2xl font-bold mb-4">Welcome, {user?.displayName}!</h1>
-        <p className="mb-4">Email: {user?.email}</p>
-        <Link to="/create-listing">
-          <button 
-            className="bg-blue-500 hover:bg-blue-600 text-white py-2 mb-2 px-4 rounded-lg w-full">List something?</button>
-        </Link>
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
+      <nav className="w-48 bg-white shadow-md flex flex-col p-4 space-y-2">
         <button
-          onClick={handleLogout}
-          className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg w-full"
+          className={`py-2 px-4 rounded ${
+            activeTab === "profile" ? "bg-black text-white" : "hover:bg-gray-200"
+          }`}
+          onClick={() => setActiveTab("profile")}
         >
-          Logout
+          Profile
         </button>
-      </div>
+
+        <button
+          className={`py-2 px-4 rounded ${
+            activeTab === "buying" ? "bg-black text-white" : "hover:bg-gray-200"
+          }`}
+          onClick={() => setActiveTab("buying")}
+        >
+          My Claims
+        </button>
+
+        <button
+          className={`py-2 px-4 rounded ${
+            activeTab === "selling" ? "bg-black text-white" : "hover:bg-gray-200"
+          }`}
+          onClick={() => setActiveTab("selling")}
+        >
+          My Listings
+        </button>
+
+      </nav>
+
+      {/* Main Content */}
+      <main className="flex-1 p-6">{renderContent()}</main>
     </div>
   );
 }
