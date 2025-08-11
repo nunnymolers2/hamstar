@@ -3,11 +3,14 @@ import { PRODUCTS } from "../data/products";
 import Button from "../components/Button";
 
 const TAGS = ["Clothes", "Kitchen Appliances", "Cutlery"];
+const CONDITIONS = ["New w/ package", "New w/o package", "Excellent", "Good", "Fair", "Poor/for parts"];
 
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownOpen1, setDropdownOpen1] = useState(false);
+  const [dropdownOpen2, setDropdownOpen2] = useState(false);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [selectedConditions, setSelectedConditions] = useState([]);
 
   const handleCheckbox = (tag) => {
     setSelectedTags((prev) =>
@@ -17,12 +20,25 @@ export default function Home() {
     );
   };
 
-  const filteredProducts =
-    selectedTags.length === 0
-      ? PRODUCTS
-      : PRODUCTS.filter((product) =>
-          product.tags.some((tag) => selectedTags.includes(tag))
-        );
+  const handleConditionCheckbox = (condition) => {
+  setSelectedConditions((prev) =>
+    prev.includes(condition)
+      ? prev.filter((c) => c !== condition)
+      : [...prev, condition]
+    );
+  };
+
+  const filteredProducts = PRODUCTS.filter((product) => {
+    const matchesTags =
+      selectedTags.length === 0 ||
+      product.tags.some((tag) => selectedTags.includes(tag));
+    
+    const matchesConditions =
+      selectedConditions.length === 0 ||
+      product.conditions?.some((cond) => selectedConditions.includes(cond));
+    
+    return matchesTags && matchesConditions;
+  });
 
   return (
     <div className="flex">
@@ -33,13 +49,13 @@ export default function Home() {
           <li>
             <button
                type="button"
-               onClick={() => setDropdownOpen(!dropdownOpen)}
+               onClick={() => setDropdownOpen1(!dropdownOpen1)}
                className="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100"
             >
                <span className="flex-1 ms-3 text-left whitespace-nowrap">Categories</span>
-               <span>{dropdownOpen ? "▲" : "▼"}</span>
+               <span>{dropdownOpen1 ? "▲" : "▼"}</span>
             </button>
-             {dropdownOpen && (
+             {dropdownOpen1 && (
               <ul className="py-2 space-y-2">
                 {TAGS.map((tag) => (
                   <li key={tag} className="px-4">
@@ -51,6 +67,33 @@ export default function Home() {
                         onChange={() => handleCheckbox(tag)}
                       />
                       <span className="ms-2 text-gray-700">{tag}</span>
+                    </label>
+                  </li>
+                ))}
+              </ul>
+             )}
+          </li>
+          <li>
+            <button
+               type="button"
+               onClick={() => setDropdownOpen2(!dropdownOpen2)}
+               className="flex items-center w-full p-2 text-base text-gray-900 transition duration-75 rounded-lg hover:bg-gray-100"
+            >
+               <span className="flex-1 ms-3 text-left whitespace-nowrap">Condition</span>
+               <span>{dropdownOpen2 ? "▲" : "▼"}</span>
+            </button>
+             {dropdownOpen2 && (
+              <ul className="py-2 space-y-2">
+                {CONDITIONS.map((condition) => (
+                  <li key={condition} className="px-4">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="checkbox"
+                        className="form-checkbox h-5 w-5 text-blue-600"
+                        checked={selectedConditions.includes(condition)}
+                        onChange={() => handleConditionCheckbox(condition)}
+                      />
+                      <span className="ms-2 text-gray-700">{condition}</span>
                     </label>
                   </li>
                 ))}
