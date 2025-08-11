@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
 const ListingSchema = new Schema({
@@ -54,4 +54,5 @@ const ListingSchema = new Schema({
   ],
 });
 
-module.exports = mongoose.model("Listing", ListingSchema);
+const Listing = mongoose.model("Listing", ListingSchema);
+export default Listing; // Changed from module.exports
