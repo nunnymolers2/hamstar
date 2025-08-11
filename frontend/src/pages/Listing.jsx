@@ -1,10 +1,15 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect, useContext } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthProvider";
 import Button from "../components/Button.jsx";
 import UserIcon from "../assets/images/user.svg";
 
 export default function Listing() {
   const { id } = useParams();
+  const { currentUser } = useContext(AuthContext);
+  const [isClaimed, setIsClaimed] = useState(false);
+  const [claimStatus, setClaimStatus] = useState(null);
+  const navigate = useNavigate();
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,6 +44,47 @@ export default function Listing() {
     setCurrentImage(
       (prev) => (prev - 1 + listing.images.length) % listing.images.length
     );
+  };
+
+  // Add this inside your component, after fetching the listing
+  useEffect(() => {
+    if (listing && currentUser) {
+      // Check if current user has already claimed this listing
+      const userClaim = listing.claims.find(
+        (claim) => claim.claimer === currentUser.uid
+      );
+      if (userClaim) {
+        setIsClaimed(true);
+        setClaimStatus(userClaim.status);
+      }
+    }
+  }, [listing, currentUser]);
+  const handleClaim = async () => {
+    if (!currentUser) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/claims", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${await currentUser.getIdToken()}`,
+        },
+        body: JSON.stringify({ listingId: id }),
+      });
+
+      if (!response.ok) throw new Error("Claim failed");
+
+      const data = await response.json();
+      setIsClaimed(true);
+      setClaimStatus("pending");
+      // Optionally refresh the listing data
+    } catch (error) {
+      console.error("Claim error:", error);
+      alert("Failed to claim item");
+    }
   };
 
   if (loading) return <div className="text-center py-8">Loading...</div>;
@@ -85,7 +131,6 @@ export default function Listing() {
       {/* RIGHT: Item details */}
       <div className="px-4 lg:px-0">
         <h1 className="text-2xl font-bold mb-4">{listing.title}</h1>
-
         {/* Seller Information */}
         <div className="block">
           <span className="inline-flex items-baseline">
@@ -101,40 +146,41 @@ export default function Listing() {
             </span>
           </span>
         </div>
-
         {/* Price */}
         <p className="text-lg font-semibold mt-2">${listing.price}</p>
-
         {/* Condition */}
         <p className="mt-2 text-gray-700">
           Condition:{" "}
           {listing.condition.charAt(0).toUpperCase() +
             listing.condition.slice(1)}
         </p>
-
         {/* Description */}
         <p className="mt-4 text-gray-700">{listing.description}</p>
-
         {/* Trading status */}
         <p className="mt-4 text-gray-700">
           {listing.trading
             ? "This seller is open to trading."
             : "This seller is not open to trading."}
         </p>
-
         {/* Negotiation status */}
         <p className="mt-4 text-gray-700">
           {listing.negotiable
             ? "This seller is open to negotiating the price."
             : "Fixed price - not negotiable."}
         </p>
-
         {/* Claim Button */}
         <Button
-          variant={/* Add your claim logic here */ "default"}
-          className="mt-4"
+          variant={isClaimed ? "disabled" : "default"}
+          onClick={handleClaim}
+          disabled={isClaimed}
         >
-          Claim
+          {isClaimed
+            ? claimStatus === "pending"
+              ? "Claim Pending"
+              : claimStatus === "accepted"
+              ? "Claim Accepted"
+              : "Claim Rejected"
+            : "Claim"}
         </Button>
       </div>
     </div>
