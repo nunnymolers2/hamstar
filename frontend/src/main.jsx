@@ -12,6 +12,8 @@ import Signup from './pages/auth/Signup';
 import Login from './pages/auth/Login';
 import Dashboard from './pages/Dashboard';
 import CreateListing from './pages/auth/CreateListing';
+import Listing from './pages/Listing';
+
 
 
 const router = createBrowserRouter([
@@ -55,6 +57,12 @@ const router = createBrowserRouter([
           </RequireAuth>
         ),
       },
+      {
+        path: 'listing',
+        element: (
+            <Listing/>
+        )
+      }
     ],
   },
 ]);
