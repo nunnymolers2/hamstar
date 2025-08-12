@@ -1,3 +1,11 @@
+// These were lifted wholesale from Dashboard 
+// in an attempt to get user info to display
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthProvider";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase";
+import { Link } from 'react-router-dom';
+
 // This is to save new password
 import { useState } from "react";
 
@@ -5,8 +13,15 @@ import Button from "../components/Button.jsx";
 import Input from "../components/Input.jsx";
 
 function Profile() {
+  const { user } = useContext(AuthContext);
+
   const [password, setPassword] = useState("");
   const [bio, setBio] = useState("This is my bio.");
+
+  // What is this block doing?
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -17,10 +32,10 @@ function Profile() {
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <h2 className="text-xl font-semibold mb-2">User Info</h2>
         <p className="text-gray-700">
-          <span className="font-medium">Name:</span> John Doe
+          <span className="font-medium">Name:</span> {user?.displayName}
         </p>
         <p className="text-gray-700">
-          <span className="font-medium">Email:</span> jdoe@hamilton.edu
+          <span className="font-medium">Email:</span> {user?.email}
         </p>
       </div>
 
