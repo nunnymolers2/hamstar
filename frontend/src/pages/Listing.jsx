@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthProvider";
+import { Link } from "react-router-dom"; 
 import Button from "../components/Button.jsx";
 import UserIcon from "../assets/images/user.svg";
 
@@ -132,7 +133,10 @@ export default function Listing() {
       <div className="px-4 lg:px-0">
         <h1 className="text-2xl font-bold mb-4">{listing.title}</h1>
         {/* Seller Information */}
-        <div className="block">
+        <Link
+          to={`/profile/${listing.owner?.id}`} // FIX: ajust based on backend field
+          className="inline-flex items-center gap-2 px-2 py-1 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors"
+          >
           <span className="inline-flex items-baseline">
             <img
               src={UserIcon}
@@ -145,7 +149,7 @@ export default function Listing() {
                 "Unknown seller"}
             </span>
           </span>
-        </div>
+        </Link>
         {/* Price */}
         <p className="text-lg font-semibold mt-2">${listing.price}</p>
         {/* Condition */}

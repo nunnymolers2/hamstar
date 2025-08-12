@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateListing from "./pages/auth/CreateListing";
 import Listing from "./pages/Listing";
 import Messaging from "./pages/Messaging";
+import UserView from "./pages/UserView";
 
 const router = createBrowserRouter([
   {
@@ -67,6 +68,10 @@ const router = createBrowserRouter([
             <Messaging />
           </RequireAuth>
         ),  
+      },
+      {
+        path: "user-view", // Changed from 'listing' to 'listings/:id'
+        element: <UserView />, // No auth requirement for viewing listings
       },
     ],
   },
