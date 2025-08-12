@@ -1,8 +1,11 @@
-import { useContext } from "react";
-import { AuthContext } from "../context/AuthProvider";
-import { signOut } from "firebase/auth";
+//The commented out code may or may not be unnecessary.
+//Perhaps remove them in further iterations.
+
+//import { useContext } from "react";
+//import { AuthContext } from "../context/AuthProvider";
+//import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
-import { Link } from 'react-router-dom';
+//import { Link } from 'react-router-dom';
 
 import { useState } from "react";
 
@@ -12,11 +15,11 @@ import ClaimsSelling from "../components/ClaimsSelling.jsx";
 
 
 export default function Dashboard() {
-  const { user } = useContext(AuthContext);
+  //const { user } = useContext(AuthContext);
 
-  const handleLogout = async () => {
-    await signOut(auth);
-  };
+  //const handleLogout = async () => {
+  //  await signOut(auth);
+  //};
 
   const [activeTab, setActiveTab] = useState("profile");
 
