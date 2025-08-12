@@ -1,3 +1,5 @@
+import { useState, useRef, useEffect } from "react";
+
 import Logo from "../assets/images/logo.svg";
 {
   /* HamSTAR logo */
@@ -32,6 +34,26 @@ import UserIcon from "../assets/images/user.svg";
 import "../assets/styles/Navbar.css";
 
 function Navbar() {
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []); 
+
+    // Placeholder notifications
+  const notifications = [
+    "Your listing has been approved.",
+    "You received a new message.",
+    "Your claim was accepted.",
+  ];
+
   return (
     <nav className="sticky top-0 z-50 bg-gray-100 p-4 flex items-center justify-between w-full">
       {/* HamSTAR logo */}
@@ -64,9 +86,32 @@ function Navbar() {
       </a>
 
       {/* Notifs / Updates */}
-      <a href="#" className="block">
-        <img src={Notifs} alt="Notifications Icon" className="block h-8 w-8" />
-      </a>
+      <div className="relative" ref={notifRef}>
+        <button
+          onClick={() => setNotifOpen((prev) => !prev)}
+          className="block focus:outline-none"
+          aria-label="Toggle notifications dropdown"
+        >
+          <img src={Notifs} alt="Notifications Icon" className="h-8 w-8" />
+        </button>
+
+        {notifOpen && (
+          <div className="absolute right-0 mt-2 w-64 bg-white border rounded shadow-lg z-50">
+            <div className="p-4 border-b font-semibold">Notifications</div>
+            <ul className="max-h-48 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <li className="p-4 text-center text-gray-500">No notifications</li>
+              ) : (
+                notifications.map((note, i) => (
+                  <li key={i} className="p-3 border-b last:border-b-0 hover:bg-gray-100 cursor-pointer">
+                    {note}
+                  </li>
+                ))
+              )}
+            </ul>
+          </div>
+        )}
+      </div>
       {/* FIX: This needs to change from Notifs to NotifsBadge when the user has a notif. */}
 
       {/* User Profile */}
