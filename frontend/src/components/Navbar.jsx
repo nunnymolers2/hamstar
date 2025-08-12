@@ -10,6 +10,10 @@ import NewPost from "../assets/images/new-post.svg";
 {
   /* New Post icon */
 }
+import Messaging from "../assets/images/message-icon.svg";
+{
+  /* Messaging icon */ 
+}
 import Notifs from "../assets/images/notif-bell.svg";
 {
   /* Notifications icon */
@@ -29,7 +33,7 @@ import "../assets/styles/Navbar.css";
 
 function Navbar() {
   return (
-    <nav className="bg-gray-100 p-4 flex items-center justify-between w-full">
+    <nav className="sticky top-0 z-50 bg-gray-100 p-4 flex items-center justify-between w-full">
       {/* HamSTAR logo */}
       <a href="/" className="block">
         <img src={Logo} alt="Hamstar Logo" className="block h-8 w-8" />
@@ -52,6 +56,11 @@ function Navbar() {
       {/* New Post */}
       <a href="/create-listing" className="block">
         <img src={NewPost} alt="New Post Icon" className="block h-8 w-8" />
+      </a>
+
+      {/* Messaging */}
+      <a href="/messaging" className="block">
+        <img src={Messaging} alt="Messaging" className="block h-8 w-8" />
       </a>
 
       {/* Notifs / Updates */}

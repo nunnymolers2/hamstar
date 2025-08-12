@@ -13,6 +13,7 @@ import Login from "./pages/auth/Login";
 import Dashboard from "./pages/Dashboard";
 import CreateListing from "./pages/auth/CreateListing";
 import Listing from "./pages/Listing";
+import Messaging from "./pages/Messaging";
 
 const router = createBrowserRouter([
   {
@@ -58,6 +59,14 @@ const router = createBrowserRouter([
       {
         path: "listings/:id", // Changed from 'listing' to 'listings/:id'
         element: <Listing />, // No auth requirement for viewing listings
+      },
+      {
+        path: "messaging",
+        element: (
+          <RequireAuth>
+            <Messaging />
+          </RequireAuth>
+        ),  
       },
     ],
   },
