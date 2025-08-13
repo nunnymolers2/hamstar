@@ -15,6 +15,7 @@ import CreateListing from "./pages/auth/CreateListing";
 import Listing from "./pages/Listing";
 import Messaging from "./pages/Messaging";
 import UserView from "./pages/UserView";
+import EditListing from "./pages/EditListing";
 
 const router = createBrowserRouter([
   {
@@ -59,7 +60,11 @@ const router = createBrowserRouter([
       },
       {
         path: "listings/:id", // Changed from 'listing' to 'listings/:id'
-        element: <Listing />, // No auth requirement for viewing listings
+        element: (
+          <RequireAuth>
+            <Listing />
+          </RequireAuth>
+        ),
       },
       {
         path: "messaging",
@@ -70,8 +75,20 @@ const router = createBrowserRouter([
         ),  
       },
       {
-        path: "user-view", // Changed from 'listing' to 'listings/:id'
-        element: <UserView />, // No auth requirement for viewing listings
+        path: "profile/:id", // Used to be user-view'
+        element: (
+          <RequireAuth>
+            <UserView />, 
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "edit-listing/:id", // Used to be user-view'
+        element: (
+          <RequireAuth>
+            <EditListing />, 
+          </RequireAuth>
+        ),
       },
     ],
   },

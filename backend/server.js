@@ -15,6 +15,7 @@ import authRoutes from "./routes/auth.routes.js";
 import listingRoutes from "./routes/listing.routes.js"; // New import
 import claimRoutes from "./routes/claim.routes.js";
 import admin from "./config/firebase.js";
+import userRoutes from "./routes/users.routes.js";
 
 const app = express();
 
@@ -36,6 +37,7 @@ app.use((req, res, next) => {
 app.use("/auth/", authRoutes);
 app.use("/api/listings", listingRoutes); // New route for listings
 app.use("/api/claims", claimRoutes);
+app.use("/api/users", userRoutes); // New route for userview
 
 // Error handling middleware
 app.use((err, req, res, next) => {

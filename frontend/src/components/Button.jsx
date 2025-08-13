@@ -12,6 +12,7 @@ export default function Button({
     danger: "bg-red-500 hover:bg-red-600 text-white",
     enabled: "bg-green-500 hover:bg-green-600 text-white",
     outline: "border border-gray-500 text-gray-700 hover:bg-gray-100",
+    light: "bg-white text-black hover:bg-gray-100 shadow-md shadow-black/25",
   };
 
   // Pick the style for the chosen variant
