@@ -96,50 +96,46 @@ router.get("/conversations", authenticate, async (req, res) => {
  */
 router.post("/start-conversation", authenticate, async (req, res) => {
   try {
-    const currentUserId = req.user.uid; // From Firebase auth
+    const currentUserId = req.user.uid;
     const { otherUserId } = req.body;
 
     // Validate input
     if (!otherUserId) {
-      return res.status(400).json({ error: "otherUserId is required" });
+      return res.status(400).json({
+        success: false,
+        error: "Other user ID is required",
+      });
     }
 
-    // Check if conversation already exists
-    let conversation = await Conversation.findOne({
-      participants: { $all: [currentUserId, otherUserId] },
-    }).populate("lastMessage");
+    // Check if users are the same
+    if (currentUserId === otherUserId) {
+      return res.status(400).json({
+        success: false,
+        error: "Cannot message yourself",
+      });
+    }
 
-    // If conversation doesn't exist, create it
+    // Find or create conversation
+    let conversation = await Conversation.findOne({
+      participants: { $all: [currentUserId, otherUserId], $size: 2 },
+    }).sort({ updatedAt: -1 });
+
     if (!conversation) {
       conversation = new Conversation({
         participants: [currentUserId, otherUserId],
       });
       await conversation.save();
-
-      // Optionally send a welcome message
-      const welcomeMessage = new Message({
-        conversationId: conversation._id,
-        senderId: currentUserId,
-        receiverId: otherUserId,
-        text: "Started a new conversation",
-      });
-      await welcomeMessage.save();
-
-      conversation.lastMessage = welcomeMessage._id;
-      await conversation.save();
     }
 
-    // Return the conversation details
     res.status(200).json({
       success: true,
       conversationId: conversation._id,
-      participants: conversation.participants,
-      lastMessage: conversation.lastMessage,
     });
   } catch (error) {
-    console.error("Error starting conversation:", error);
+    console.error("Error in start-conversation:", error);
     res.status(500).json({
-      error: "Failed to start conversation",
+      success: false,
+      error: "Internal server error",
       details: error.message,
     });
   }

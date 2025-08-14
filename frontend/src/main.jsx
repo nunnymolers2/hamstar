@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { AuthProvider } from "./context/AuthProvider";
+import { MessagingProvider } from "./context/MessagingContext";
 import RequireAuth from "./context/RequireAuth";
 import AuthRedirect from "./components/Auth/AuthRedirect";
 
@@ -13,7 +14,7 @@ import Login from "./pages/auth/Login";
 import Dashboard from "./pages/Dashboard";
 import CreateListing from "./pages/auth/CreateListing";
 import Listing from "./pages/Listing";
-import Messaging from "./pages/Messaging";
+import MessagingApp from "./pages/Messaging"; // Changed from Messaging to match your component
 import UserView from "./pages/UserView";
 import EditListing from "./pages/EditListing";
 
@@ -59,7 +60,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "listings/:id", // Changed from 'listing' to 'listings/:id'
+        path: "listings/:id",
         element: (
           <RequireAuth>
             <Listing />
@@ -67,26 +68,26 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "messaging",
+        path: "messages", // Consolidated both messaging routes
         element: (
           <RequireAuth>
-            <Messaging />
-          </RequireAuth>
-        ),  
-      },
-      {
-        path: "profile/:id", // Used to be user-view'
-        element: (
-          <RequireAuth>
-            <UserView />, 
+            <MessagingApp />
           </RequireAuth>
         ),
       },
       {
-        path: "edit-listing/:id", // Used to be user-view'
+        path: "profile/:id",
         element: (
           <RequireAuth>
-            <EditListing />, 
+            <UserView />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "edit-listing/:id",
+        element: (
+          <RequireAuth>
+            <EditListing />
           </RequireAuth>
         ),
       },
@@ -99,7 +100,11 @@ const root = createRoot(document.getElementById("root"));
 root.render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
+      <MessagingProvider>
+        {" "}
+        {/* Added MessagingProvider */}
+        <RouterProvider router={router} />
+      </MessagingProvider>
     </AuthProvider>
   </StrictMode>
 );

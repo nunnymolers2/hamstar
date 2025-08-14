@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ListingCard from "../components/ListingCard.jsx";
 import UserIcon from "../assets/images/user.svg";
-import { auth } from "../firebase"; // Import your Firebase auth
+import { auth } from "../firebase";
+import { useMessaging } from "../context/MessagingContext";
 
 export default function UserView() {
-  const { id } = useParams(); // id = Firebase UID of the user being viewed
+  const { id } = useParams();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,8 +14,19 @@ export default function UserView() {
   const [messageError, setMessageError] = useState(null);
   const navigate = useNavigate();
 
-  // Function to start a conversation
+  const messaging = useMessaging();
+  const startNewConversation = messaging?.startNewConversation;
+
+  // const { startNewConversation } = useMessaging();
+
+  // Combined conversation starter using context
   const startConversation = async () => {
+    if (!startNewConversation) {
+      console.error("Messaging context not available");
+      navigate("/messages"); // Fallback to messages page
+      return;
+    }
+
     try {
       setMessageLoading(true);
       setMessageError(null);
@@ -24,38 +36,31 @@ export default function UserView() {
         throw new Error("You need to be logged in to message");
       }
 
-      // Check if trying to message yourself
       if (currentUser.uid === id) {
         throw new Error("You can't message yourself");
       }
 
-      const token = await currentUser.getIdToken();
-      const response = await fetch(
-        `http://localhost:3001/api/messages/start-conversation`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+      const conversation = await startNewConversation(id);
+
+      navigate("/messages", {
+        state: {
+          selectedChat: {
+            id: id,
+            conversationId: conversation._id,
+            name: user?.username || user?.name || user?.email,
+            avatar: user?.pfp,
           },
-          body: JSON.stringify({ otherUserId: id }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to start conversation");
-      }
-
-      const data = await response.json();
-      navigate(`/messages/${data.conversationId}`);
+        },
+      });
     } catch (err) {
       setMessageError(err.message);
+      console.error("Conversation error:", err);
     } finally {
       setMessageLoading(false);
     }
   };
 
+  // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
       try {

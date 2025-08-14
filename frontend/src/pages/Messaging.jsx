@@ -1,50 +1,35 @@
 import { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import axios from "axios";
-import defaultAvatar from "../assets/images/user.svg";
+import { useMessaging } from "../context/MessagingContext";
 import useSocket from "../hooks/useSocket";
+import defaultAvatar from "../assets/images/user.svg";
 
 export default function MessagingApp() {
-  const [selectedChat, setSelectedChat] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
-  const [conversations, setConversations] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const {
+    conversations,
+    setConversations,
+    users,
+    setUsers,
+    loading,
+    setLoading,
+    error,
+    setError,
+    refreshConversations,
+  } = useMessaging();
 
-  // Use socket via custom hook
+  const location = useLocation();
+  const navigate = useNavigate();
   const socket = useSocket();
 
-  // Messaging.jsx
-  const startNewConversation = async (otherUserId) => {
-    try {
-      const token = await auth.currentUser?.getIdToken();
-      const response = await axios.post(
-        "/api/messages/start-conversation",
-        { otherUserId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  const [selectedChat, setSelectedChat] = useState(
+    location.state?.selectedChat || null
+  );
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
 
-      if (response.data.success) {
-        // Update your state with the new conversation
-        setConversations((prev) => [...prev, response.data]);
-        setSelectedChat({
-          id: otherUserId,
-          conversationId: response.data.conversationId,
-        });
-        return response.data.conversationId;
-      }
-    } catch (error) {
-      console.error(
-        "Error starting conversation:",
-        error.response?.data || error.message
-      );
-      setError("Failed to start conversation");
-      return null;
-    }
-  };
-
+  // Data fetching functions
   const fetchUsers = async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
@@ -52,8 +37,8 @@ export default function MessagingApp() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(Array.isArray(response?.data) ? response.data : []);
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
       setUsers([]);
     }
   };
@@ -65,35 +50,59 @@ export default function MessagingApp() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setConversations(Array.isArray(response?.data) ? response.data : []);
-    } catch (error) {
-      console.error("Failed to fetch conversations:", error);
+    } catch (err) {
+      console.error("Failed to fetch conversations:", err);
       setError("Failed to load conversations");
       setConversations([]);
     }
   };
 
-  // Fetch initial data
+  const startNewConversation = async (otherUserId) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const response = await axios.post(
+        "/api/messages/start-conversation",
+        { otherUserId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        setConversations((prev) => [...prev, response.data]);
+        setSelectedChat({
+          id: otherUserId,
+          conversationId: response.data.conversationId,
+          name: response.data.participantName,
+          avatar: response.data.participantAvatar,
+        });
+        return response.data.conversationId;
+      }
+    } catch (err) {
+      console.error("Error starting conversation:", err);
+      setError("Failed to start conversation");
+      return null;
+    }
+  };
+
+  // Initial data load
   useEffect(() => {
-    const fetchData = async () => {
+    const loadData = async () => {
       setLoading(true);
       try {
         await Promise.all([fetchUsers(), fetchConversations()]);
       } catch (err) {
-        console.error("Initial data fetch error:", err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    loadData();
   }, []);
 
-  // Handle socket events when chat is selected
+  // Socket message handling
   useEffect(() => {
     if (!selectedChat || !socket.current) return;
 
-    // Join conversation room
     const conversation = conversations.find(
       (c) =>
         c.participants.includes(selectedChat.id) &&
@@ -104,8 +113,7 @@ export default function MessagingApp() {
       socket.current.emit("joinConversation", conversation._id);
     }
 
-    // Listen for new messages
-    const handleNewMessage = (message) => {
+    const handleMessage = (message) => {
       if (
         (message.senderId === selectedChat.id ||
           message.senderId === auth.currentUser.uid) &&
@@ -115,33 +123,29 @@ export default function MessagingApp() {
       }
     };
 
-    socket.current.on("newMessage", handleNewMessage);
-
-    return () => {
-      socket.current.off("newMessage", handleNewMessage);
-    };
+    socket.current.on("newMessage", handleMessage);
+    return () => socket.current.off("newMessage", handleMessage);
   }, [selectedChat, conversations, messages, socket]);
 
-  // Fetch messages when chat is selected
+  // Fetch messages for selected chat
   useEffect(() => {
-    const fetchMessages = async () => {
+    const loadMessages = async () => {
       if (!selectedChat) return;
-
       try {
         const token = await auth.currentUser.getIdToken();
-        const response = await axios.get(
+        const { data } = await axios.get(
           `/api/messages/conversation/${selectedChat.id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setMessages(response.data.messages.map(formatMessage));
+        setMessages(data.messages.map(formatMessage));
       } catch (err) {
         setError(err.message);
       }
     };
-
-    fetchMessages();
+    loadMessages();
   }, [selectedChat]);
 
+  // Helper functions
   const formatMessage = (message) => ({
     ...message,
     time: new Date(message.timestamp).toLocaleTimeString([], {
@@ -154,8 +158,8 @@ export default function MessagingApp() {
   const handleSend = async () => {
     if (!input.trim() || !selectedChat || !socket.current) return;
 
+    const tempId = Date.now().toString();
     try {
-      const token = await auth.currentUser.getIdToken();
       const newMessage = {
         text: input,
         senderId: auth.currentUser.uid,
@@ -163,19 +167,14 @@ export default function MessagingApp() {
         timestamp: new Date().toISOString(),
       };
 
-      // Optimistic UI update
+      // Optimistic update
       setMessages((prev) => [
         ...prev,
-        formatMessage({
-          ...newMessage,
-          _id: Date.now().toString(),
-        }),
+        formatMessage({ ...newMessage, _id: tempId }),
       ]);
 
-      // Send via socket
+      const token = await auth.currentUser.getIdToken();
       socket.current.emit("sendMessage", newMessage);
-
-      // Also send via HTTP as fallback
       await axios.post(
         "/api/messages/send",
         { receiverId: selectedChat.id, text: input },
@@ -185,10 +184,7 @@ export default function MessagingApp() {
       setInput("");
     } catch (err) {
       setError(err.message);
-      // Rollback optimistic update if needed
-      setMessages((prev) =>
-        prev.filter((m) => m._id !== Date.now().toString())
-      );
+      setMessages((prev) => prev.filter((m) => m._id !== tempId));
     }
   };
 
@@ -218,39 +214,55 @@ export default function MessagingApp() {
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
       <div className="w-64 bg-white border-r overflow-y-auto">
-        <h2 className="p-4 font-bold text-lg border-b">Chats</h2>
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="font-bold text-lg">Chats</h2>
+          <button
+            onClick={refreshConversations}
+            className="text-blue-500 hover:text-blue-700"
+          >
+            Refresh
+          </button>
+        </div>
 
-        {Array.isArray(conversations) &&
-          conversations.map((conversation) => {
-            const chatUser = getChatUser(conversation);
-            if (!chatUser) return null;
+        {conversations.map((conversation) => {
+          const chatUser = getChatUser(conversation);
+          if (!chatUser) return null;
 
-            return (
-              <div
-                key={
-                  conversation._id || Math.random().toString(36).substr(2, 9)
-                }
-                onClick={() => setSelectedChat(chatUser)}
-                className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-100 ${
-                  selectedChat?.id === chatUser.id ? "bg-gray-200" : ""
-                }`}
-              >
-                <img
-                  src={chatUser.avatar || defaultAvatar}
-                  alt={chatUser.name || "User"}
-                  className="w-10 h-10 rounded-full"
-                />
-                <div className="overflow-hidden">
-                  <p className="font-medium truncate">
-                    {chatUser.name || "Unknown User"}
-                  </p>
-                  <p className="text-xs text-gray-500 truncate">
-                    {conversation.lastMessage?.text || "No messages yet"}
-                  </p>
-                </div>
+          return (
+            <div
+              key={conversation._id}
+              onClick={() => {
+                setSelectedChat({
+                  id: chatUser.id,
+                  conversationId: conversation._id,
+                  name: chatUser.name,
+                  avatar: chatUser.avatar,
+                });
+                navigate(".", {
+                  state: { selectedChat: chatUser },
+                  replace: true,
+                });
+              }}
+              className={`flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-100 ${
+                selectedChat?.id === chatUser.id ? "bg-gray-200" : ""
+              }`}
+            >
+              <img
+                src={chatUser.avatar || defaultAvatar}
+                alt={chatUser.name || "User"}
+                className="w-10 h-10 rounded-full"
+              />
+              <div className="overflow-hidden">
+                <p className="font-medium truncate">
+                  {chatUser.name || "Unknown User"}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {conversation.lastMessage?.text || "No messages yet"}
+                </p>
               </div>
-            );
-          })}
+            </div>
+          );
+        })}
       </div>
 
       {/* Chat window */}
@@ -277,9 +289,9 @@ export default function MessagingApp() {
                   No messages yet. Start the conversation!
                 </div>
               ) : (
-                messages.map((message, i) => (
+                messages.map((message) => (
                   <div
-                    key={message._id || i}
+                    key={message._id}
                     className={`flex ${
                       message.sender === "me" ? "justify-end" : "justify-start"
                     } mb-2`}
