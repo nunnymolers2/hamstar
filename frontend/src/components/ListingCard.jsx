@@ -16,6 +16,7 @@ export default function ListingCard({
   claimerName,
   onClaimAccept,
   onClaimReject,
+  showManageClaims,
 }) {
 
   const isClaimed = claimStatus === "pending" || claimStatus === "accepted";
@@ -75,14 +76,27 @@ export default function ListingCard({
         </Link>
 
         {/* Action button — calls onClaim passed from parent */}
+        {showManageClaims ? (
         <Button
-        variant={isClaimed ? "disabled" : "default"}
+        variant="outline"
         className="w-full mt-2"
-        onClick={() => onClaim && onClaim(listing._id)}
-        disabled={isClaimed}
-          >
-        {isClaimed ? "Claimed" : "Claim"}
-        </Button>
+        onClick={() => {
+        // Navigate to manage claims page
+        window.location.href = `/manage-claims/${listing._id}`;
+      }}
+    >
+      Manage Claims
+    </Button> 
+      ) : (
+    <Button
+      variant={isClaimed ? "disabled" : "default"}
+      className="w-full mt-2"
+      onClick={() => onClaim && onClaim(listing._id)}
+      disabled={isClaimed}
+    >
+      {isClaimed ? "Claimed" : "Claim"}
+    </Button>
+    )}
       </div>
     );
   };
@@ -97,39 +111,30 @@ export default function ListingCard({
         </Link>
 
         {/* Action button — calls onClaim passed from parent */}
+        {showManageClaims ? (
         <Button
+          variant="outline"
+          className="w-full mt-2"
+          onClick={() => {
+          // Navigate to manage claims page
+          window.location.href = `/manage-claims/${listing._id}`;
+        }}
+      >
+        Manage Claims
+      </Button>
+        ) : (
+      <Button
         variant={isClaimed ? "disabled" : "default"}
         className="w-full mt-2"
         onClick={() => onClaim && onClaim(listing._id)}
         disabled={isClaimed}
-          >
-        {isClaimed ? "Claimed" : "Claim"}
-        </Button>
-
+      >
+      {isClaimed ? "Claimed" : "Claim"}
+      </Button>
+      )}
       </div>
     );
   };
-
-  // Self Variant: whole card clickable + see claims button 
-  // if (variant === "self") {
-  //   return (
-  //     <div className={className}>
-  //       {/* Only content is clickable; button is outside the link */}
-  //       <Link to={`/listings/${listing._id}`} className="w-full block">
-  //         {content}
-  //       </Link>
-
-  //       {/* Action button — calls onClaim passed from parent */}
-  //       <Button
-  //         variant="outline"
-  //         className="w-full mt-2"
-  //         onClick={() => onClaim && onClaim(listing._id)}
-  //       >
-  //         Manage Claims
-  //       </Button>
-  //     </div>
-  //   );
-  // };
 
   if (variant === "self") {
   return (

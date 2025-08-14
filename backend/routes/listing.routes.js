@@ -72,6 +72,22 @@ router.post(
   }
 );
 
+// Get listings of the currently logged-in user
+router.get("/user", verifyTokenAndUser, async (req, res) => {
+  try {
+    // Query listings where owner matches the current user
+    const listings = await Listing.find({ owner: req.user._id }).populate(
+      "owner",
+      "-password"
+    );
+
+    res.json(listings);
+  } catch (error) {
+    console.error("Error fetching user's listings:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // Get all listings
 router.get("/", async (req, res) => {
   try {

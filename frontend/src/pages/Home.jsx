@@ -214,15 +214,19 @@ export default function Home() {
             </div>
           )}
           {/* Render filtered listing cards */}
-          {filteredListings.map((listing) => (
-            <ListingCard
-            key={listing._id}
-            listing={listing}
-            claimStatus={claimedIds.includes(listing._id) ? "pending" : null}
-            onClaim={handleClaim}
-          />
-        ))}
+          {filteredListings.map((listing) => {
+          const isOwner = listing.owner?.firebaseUID === user?.uid;
 
+          return (
+          <ListingCard
+          key={listing._id}
+          listing={listing}
+          claimStatus={claimedIds.includes(listing._id) ? "pending" : null}
+          onClaim={!isOwner ? handleClaim : undefined} // only allow claim if not owner
+          showManageClaims={isOwner} // pass a flag for ListingCard to render Manage Claims button
+          />
+        );
+        })}
         </div>
       </main>
     </div>

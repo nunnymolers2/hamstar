@@ -65,7 +65,7 @@ router.get("/user", verifyUser, async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const claims = await Claim.find({ claimer: user._id })
-    .populate("listing", "title price images")
+    .populate("listing", "title price images condition category description")
     .populate("claimer", "_id firebaseUID username email"); // include _id & firebaseUID
 
     res.json(claims);
@@ -82,13 +82,13 @@ router.get("/selling", verifyUser, async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     // Find listings by current user
-    const listings = await Listing.find({ seller: user._id }).select("_id");
+    const listings = await Listing.find({ owner: user._id }).select("_id");
     const listingIds = listings.map(l => l._id);
 
     // Find claims on those listings
     const claims = await Claim.find({ listing: { $in: listingIds } })
-      .populate("listing", "title price images")
-      .populate("claimer", "username email");
+      .populate("listing", "title price images condition category description")
+      .populate("claimer", "_id firebaseUID username email"); // include _id & firebaseUID
 
     res.json(claims);
   } catch (error) {
@@ -107,7 +107,7 @@ router.post("/:claimId/accept", verifyUser, async (req, res) => {
 
     // Check if current user is the seller of this listing
     const seller = await User.findOne({ firebaseUID: req.user.uid });
-    if (!seller || claim.listing.seller.toString() !== seller._id.toString()) {
+    if (!seller || claim.listing.owner.toString() !== seller._id.toString()) {
       return res.status(403).json({ error: "Not authorized" });
     }
 
@@ -130,7 +130,7 @@ router.post("/:claimId/reject", verifyUser, async (req, res) => {
     if (!claim) return res.status(404).json({ error: "Claim not found" });
 
     const seller = await User.findOne({ firebaseUID: req.user.uid });
-    if (!seller || claim.listing.seller.toString() !== seller._id.toString()) {
+    if (!seller || claim.listing.owner.toString() !== seller._id.toString()) {
       return res.status(403).json({ error: "Not authorized" });
     }
 
