@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useContext } from "react";
+import { AuthContext } from "../context/AuthProvider";
 import { Link } from "react-router-dom";
 import Button from "../components/Button";
 import ListingCard from "../components/ListingCard";
@@ -8,6 +10,7 @@ const TAGS = ["electronics", "furniture", "clothing", "books", "other"];
 const CONDITIONS = ["new", "used", "refurbished", "for parts"];
 
 export default function Home() {
+  const { user, claimedIds, setClaimedIds } = useContext(AuthContext);
   // Sidebar and dropdown open states
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen1, setDropdownOpen1] = useState(false);
@@ -24,25 +27,71 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const handleClaim = async (listingId) => {
+  if (!user) {
+    alert("Please log in to claim an item");
+    return;
+  }
+
+  setClaimedIds(prev => [...prev, listingId]);
+
+  try {
+    const token = await user.getIdToken();
+    const res = await fetch("http://localhost:3001/api/claims", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ listingId }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to claim");
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+    setClaimedIds(prev => prev.filter(id => id !== listingId));
+  }
+};
+
   // Fetch listings from backend
   useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        const response = await fetch("http://localhost:3001/api/listings");
-        if (!response.ok) {
-          throw new Error("Failed to fetch listings");
-        }
-        const data = await response.json();
-        setListings(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      // Fetch all listings first (this is public, no token needed)
+      const listingsRes = await fetch("http://localhost:3001/api/listings");
+      if (!listingsRes.ok) throw new Error("Failed to fetch listings");
+      const listingsData = await listingsRes.json();
+      setListings(listingsData);
 
-    fetchListings();
-  }, []);
+      // Only fetch user's claimed listings if user exists
+      if (user) {
+        const token = await user.getIdToken();
+        const claimsRes = await fetch("http://localhost:3001/api/claims/user", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!claimsRes.ok) {
+          // Don't throw immediately, log the actual status for debugging
+          console.error("Claims fetch failed with status:", claimsRes.status);
+          return;
+        }
+
+        const claimsData = await claimsRes.json();
+        setClaimedIds(claimsData.map(c => c.listing._id));
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [user]); // runs again only when user changes
+
 
   // Toggle category tag selection when checkbox is clicked
   const handleCheckbox = (tag) => {
@@ -166,8 +215,14 @@ export default function Home() {
           )}
           {/* Render filtered listing cards */}
           {filteredListings.map((listing) => (
-            <ListingCard key={listing._id} listing={listing} />
-          ))}
+            <ListingCard
+            key={listing._id}
+            listing={listing}
+            claimStatus={claimedIds.includes(listing._id) ? "pending" : null}
+            onClaim={handleClaim}
+          />
+        ))}
+
         </div>
       </main>
     </div>

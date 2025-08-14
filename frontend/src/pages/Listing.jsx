@@ -7,12 +7,11 @@ import UserIcon from "../assets/images/user.svg";
 
 export default function Listing() {
   const { id } = useParams();
-  const { user: currentUser } = useContext(AuthContext);
+  const { user: currentUser, claimedIds, setClaimedIds } = useContext(AuthContext);
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentImage, setCurrentImage] = useState(0);
-  const [isClaimed, setIsClaimed] = useState(false);
   const [claimStatus, setClaimStatus] = useState(null);
   const navigate = useNavigate();
 
@@ -69,18 +68,21 @@ export default function Listing() {
 
   console.log("DEBUG: isOwner result =", isOwner);
 
-  // Check if current user has claimed
+  const isClaimed = claimedIds.includes(id);
+
   useEffect(() => {
-    if (listing && currentUser) {
-      const userClaim = listing.claims?.find(
-        (claim) => claim.claimer === currentUser.uid
-      );
-      if (userClaim) {
-        setIsClaimed(true);
-        setClaimStatus(userClaim.status);
-      }
-    }
-  }, [listing, currentUser]);
+  if (!listing || !currentUser) return;
+
+  const userClaim = listing.claims?.find((claim) => {
+    const claimerId =
+      claim.claimer?._id?.toString() || claim.claimer?.firebaseUID || claim.claimer;
+    // fallback: if currentUser._id exists, compare that too
+    return claimerId === currentUser.uid || claimerId === currentUser._id;
+  });
+
+  setClaimStatus(userClaim?.status || "pending"); // default to pending if just claimed
+}, [listing, currentUser]);
+
 
   // Carousel
   const nextSlide = () => setCurrentImage((prev) => (prev + 1) % listing.images.length);
@@ -89,29 +91,51 @@ export default function Listing() {
 
   // Claim
   const handleClaim = async () => {
-    if (!currentUser) {
-      navigate("/login");
+  if (!currentUser) {
+    navigate("/login");
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:3001/api/claims", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${await currentUser.getIdToken()}`,
+      },
+      body: JSON.stringify({ listingId: id }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // show backend error message
+      alert(data.error || "Failed to claim item");
       return;
     }
 
-    try {
-      const response = await fetch("/api/claims", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${await currentUser.getIdToken()}`,
-        },
-        body: JSON.stringify({ listingId: id }),
-      });
-      if (!response.ok) throw new Error("Claim failed");
-      await response.json();
-      setIsClaimed(true);
-      setClaimStatus("pending");
-    } catch (error) {
-      console.error("Claim error:", error);
-      alert("Failed to claim item");
-    }
-  };
+    // Success → update local & global state
+    setClaimedIds((prev) => [...prev, id]);
+    setClaimStatus("pending");
+    setListing((prev) => ({
+    ...prev,
+    claims: [
+    ...(prev.claims || []),
+    { 
+      _id: data.claim._id,            // from backend response
+      claimer: { 
+        _id: currentUser.uid,         // match backend
+        firebaseUID: currentUser.uid,
+      },
+      status: "pending",
+    },
+  ],
+  }));
+  } catch (error) {
+    console.error("Claim error:", error);
+    alert("Failed to claim item");
+  }
+};
 
   // Delete
   const handleDelete = async () => {

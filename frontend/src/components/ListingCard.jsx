@@ -12,7 +12,14 @@ export default function ListingCard({
   listing,
   variant = "default",
   onClaim,
+  claimStatus,
+  claimerName,
+  onClaimAccept,
+  onClaimReject,
 }) {
+
+  const isClaimed = claimStatus === "pending" || claimStatus === "accepted";
+
   // Base card classes
   const base =
     "bg-white border rounded-lg shadow p-4 flex flex-col justify-between items-center hover:shadow-lg transition-shadow";
@@ -69,11 +76,12 @@ export default function ListingCard({
 
         {/* Action button — calls onClaim passed from parent */}
         <Button
-          variant="default"
-          className="w-full mt-2"
-          onClick={() => onClaim && onClaim(listing._id)}
-        >
-          Claim
+        variant={isClaimed ? "disabled" : "default"}
+        className="w-full mt-2"
+        onClick={() => onClaim && onClaim(listing._id)}
+        disabled={isClaimed}
+          >
+        {isClaimed ? "Claimed" : "Claim"}
         </Button>
       </div>
     );
@@ -90,36 +98,62 @@ export default function ListingCard({
 
         {/* Action button — calls onClaim passed from parent */}
         <Button
-          variant="enabled"
-          className="w-full mt-2"
-          onClick={() => onClaim && onClaim(listing._id)}
-        >
-          Claim
+        variant={isClaimed ? "disabled" : "default"}
+        className="w-full mt-2"
+        onClick={() => onClaim && onClaim(listing._id)}
+        disabled={isClaimed}
+          >
+        {isClaimed ? "Claimed" : "Claim"}
         </Button>
+
       </div>
     );
   };
 
   // Self Variant: whole card clickable + see claims button 
-  if (variant === "self") {
-    return (
-      <div className={className}>
-        {/* Only content is clickable; button is outside the link */}
-        <Link to={`/listings/${listing._id}`} className="w-full block">
-          {content}
-        </Link>
+  // if (variant === "self") {
+  //   return (
+  //     <div className={className}>
+  //       {/* Only content is clickable; button is outside the link */}
+  //       <Link to={`/listings/${listing._id}`} className="w-full block">
+  //         {content}
+  //       </Link>
 
-        {/* Action button — calls onClaim passed from parent */}
-        <Button
-          variant="outline"
-          className="w-full mt-2"
-          onClick={() => onClaim && onClaim(listing._id)}
-        >
-          Manage Claims
-        </Button>
-      </div>
-    );
-  };
+  //       {/* Action button — calls onClaim passed from parent */}
+  //       <Button
+  //         variant="outline"
+  //         className="w-full mt-2"
+  //         onClick={() => onClaim && onClaim(listing._id)}
+  //       >
+  //         Manage Claims
+  //       </Button>
+  //     </div>
+  //   );
+  // };
+
+  if (variant === "self") {
+  return (
+    <div className={className}>
+      <Link to={`/listings/${listing._id}`} className="w-full block">
+        {content}
+      </Link>
+
+      {/* If you want "Manage Claims" always: */}
+      <Button variant="outline" className="w-full mt-2" onClick={() => { /* open claim modal if needed */ }}>
+        Manage Claims
+      </Button>
+
+      {/* If you want to show individual claims */}
+      {claimerName && (
+        <div className="flex gap-2 mt-2">
+          <span>{claimerName}</span>
+          <Button variant="outline" onClick={onClaimAccept}>Accept</Button>
+          <Button variant="outline" onClick={onClaimReject}>Reject</Button>
+        </div>
+      )}
+    </div>
+  );
+}
 
   // Sold variant: non-clickable card, no button
   return <div className={className}>{content}</div>;

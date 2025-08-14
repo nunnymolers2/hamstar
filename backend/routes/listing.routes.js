@@ -6,6 +6,7 @@ import Listing from "../models/Listing.js";
 import User from "../models/User.js";
 import { storage } from "../config/cloudinary.js"; // Import storage instead of cloudinary
 import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 
 // Initialize multer with Cloudinary storage
 const upload = multer({ storage });
@@ -90,7 +91,11 @@ router.get("/:id", async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id)
       .populate("owner", "-password")
-      // .populate("claims");
+      .populate({
+        path: "claims",
+        select: "status claimer",
+        populate: { path: "claimer", select: "firebaseUID _id username" },
+      });
 
     if (!listing) {
       return res.status(404).json({ error: "Listing not found" });
