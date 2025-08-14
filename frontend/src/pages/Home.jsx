@@ -33,8 +33,6 @@ export default function Home() {
     return;
   }
 
-  setClaimedIds(prev => [...prev, listingId]);
-
   try {
     const token = await user.getIdToken();
     const res = await fetch("http://localhost:3001/api/claims", {
@@ -48,10 +46,12 @@ export default function Home() {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Failed to claim");
+
+    // Only update claimedIds AFTER successful claim
+    setClaimedIds(prev => [...prev, listingId]);
   } catch (err) {
     console.error(err);
     alert(err.message);
-    setClaimedIds(prev => prev.filter(id => id !== listingId));
   }
 };
 
